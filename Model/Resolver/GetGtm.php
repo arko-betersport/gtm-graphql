@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @category  ScandiPWA
  * @package   ScandiPWA\GtmGraphQl
@@ -16,6 +17,7 @@ use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Query\Resolver\Value;
 use Magento\Framework\GraphQl\Query\ResolverInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
+use Magento\Framework\HTTP\Header;
 use Magento\Store\Model\ScopeInterface;
 
 /**
@@ -30,16 +32,20 @@ class GetGtm implements ResolverInterface
      */
     private $scopeConfig;
 
+    /** @var Header */
+    private $httpHeader;
+
     /**
      * GetGtm constructor.
      *
      * @param ScopeConfigInterface $scopeConfig
      */
     public function __construct(
-        ScopeConfigInterface $scopeConfig
-    )
-    {
+        ScopeConfigInterface $scopeConfig,
+        Header $httpHeader
+    ) {
         $this->scopeConfig = $scopeConfig;
+        $this->httpHeader = $httpHeader;
     }
 
     /**
@@ -55,8 +61,15 @@ class GetGtm implements ResolverInterface
      */
     public function resolve(Field $field, $context, ResolveInfo $info, array $value = null, array $args = null)
     {
+        $userAgent = $this->httpHeader->getHttpUserAgent(true);
+        $enabled = (bool)$this->getConfigData('enabled');
+
+        if (strpos($userAgent, 'Prerender') !== false) {
+            $enabled = false;
+        }
+
         return [
-            'enabled' => (bool)$this->getConfigData('enabled'),
+            'enabled' => $enabled,
             'gtm_id' => $this->getConfigData('gtm_id'),
             'events' => [
                 'gtm_general_init' => $this->getConfigData('general', 'events'),
