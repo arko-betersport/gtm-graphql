@@ -65,7 +65,7 @@ class GetGtm implements ResolverInterface
         $enabled = (bool)$this->getConfigData('enabled');
 
         if (strpos($userAgent, 'Prerender') !== false) {
-            $enabled = false;
+            // $enabled = false;
         }
 
         return [
